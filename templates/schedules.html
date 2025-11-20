@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Horarios</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
+        
+        .header { background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); color: white; padding: 1rem; }
+        .header h1 { text-align: center; }
+        .datetime { text-align: center; font-size: 0.9rem; margin-top: 0.5rem; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .controls { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        
+        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .schedule-card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .schedule-card h3 { color: #495057; margin-bottom: 1rem; }
+        
+        .table { width: 100%; border-collapse: collapse; }
+        .table th { background: #f8f9fa; padding: 0.75rem; text-align: left; font-weight: 600; border-bottom: 2px solid #dee2e6; }
+        .table td { padding: 0.75rem; border-bottom: 1px solid #dee2e6; }
+        .table tr:hover { background: #f8f9fa; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal-content { background: white; margin: 5% auto; padding: 2rem; border-radius: 12px; max-width: 500px; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-control { width: 100%; padding: 0.75rem; border: 1px solid #ced4da; border-radius: 6px; }
+        
+        .badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .day-schedule { margin-bottom: 0.5rem; padding: 0.5rem; background: #f8f9fa; border-radius: 6px; }
+        .loading { text-align: center; padding: 2rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🕰️ Control de Horarios</h1>
+        <div class="datetime" id="currentDateTime"></div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <a href="/" class="btn btn-secondary">← Volver al Dashboard</a>
+            <button class="btn btn-primary" onclick="showAddScheduleModal()">➕ Agregar Horario</button>
+            <button class="btn btn-success" onclick="generateScheduleReport()">📊 Reporte de Cumplimiento</button>
+        </div>
+
+        <div class="schedule-grid">
+            <div class="schedule-card">
+                <h3>📅 Horarios por Empleado</h3>
+                <div id="employeeSchedules" class="loading">Cargando horarios...</div>
+            </div>
+            
+            <div class="schedule-card">
+                <h3>⏰ Estado Actual</h3>
+                <div id="currentStatus" class="loading">Verificando estado...</div>
+            </div>
+        </div>
+
+        <div class="schedule-card">
+            <h3>📋 Todos los Horarios</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Día</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="schedulesTable">
+                    <tr><td colspan="6" class="loading">Cargando horarios...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Horario -->
+    <div class="modal" id="scheduleModal">
+        <div class="modal-content">
+            <h3>➕ Agregar Horario de Trabajo</h3>
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label>Empleado *</label>
+                    <select class="form-control" id="employeeSelect" required>
+                        <option value="">Seleccionar empleado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Día de la Semana *</label>
+                    <select class="form-control" id="daySelect" required>
+                        <option value="1">Lunes</option>
+                        <option value="2">Martes</option>
+                        <option value="3">Miércoles</option>
+                        <option value="4">Jueves</option>
+                        <option value="5">Viernes</option>
+                        <option value="6">Sábado</option>
+                        <option value="0">Domingo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hora de Entrada *</label>
+                    <input type="time" class="form-control" id="startTime" value="09:00" required>
+                </div>
+                <div class="form-group">
+                    <label>Hora de Salida *</label>
+                    <input type="time" class="form-control" id="endTime" value="17:00" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-success">✅ Agregar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">❌ Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allSchedules = [];
+        let allEmployees = [];
+
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', {
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('es-ES', {
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit'
+            });
+            document.getElementById('currentDateTime').textContent = `${dateStr} - ${timeStr}`;
+        }
+
+        function loadEmployees() {
+            fetch('/api/employees')
+                .then(response => response.json())
+                .then(employees => {
+                    allEmployees = employees.filter(emp => emp.active);
+                    const select = document.getElementById('employeeSelect');
+                    select.innerHTML = '<option value="">Seleccionar empleado</option>';
+                    
+                    allEmployees.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.employee_id;
+                        option.textContent = emp.name;
+                        select.appendChild(option);
+                    });
+                });
+        }
+
+        function loadSchedules() {
+            fetch('/api/schedules')
+                .then(response => response.json())
+                .then(schedules => {
+                    allSchedules = schedules;
+                    displaySchedules(schedules);
+                    displayEmployeeSchedules(schedules);
+                    updateCurrentStatus();
+                });
+        }
+
+        function displaySchedules(schedules) {
+            const tbody = document.getElementById('schedulesTable');
+            
+            if (schedules.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">No hay horarios configurados</td></tr>';
+                return;
+            }
+
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+            tbody.innerHTML = schedules.map(schedule => `
+                <tr>
+                    <td><strong>${schedule.employee_name}</strong></td>
+                    <td>${dayNames[schedule.day_of_week]}</td>
+                    <td>${schedule.start_time}</td>
+                    <td>${schedule.end_time}</td>
+                    <td><span class="badge badge-success">Activo</span></td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deleteSchedule(${schedule.id})">🗑️ Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayEmployeeSchedules(schedules) {
+            const container = document.getElementById('employeeSchedules');
+            const grouped = {};
+
+            schedules.forEach(schedule => {
+                if (!grouped[schedule.employee_name]) {
+                    grouped[schedule.employee_name] = [];
+                }
+                grouped[schedule.employee_name].push(schedule);
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = '<div class="loading">No hay horarios configurados</div>';
+                return;
+            }
+
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+            container.innerHTML = Object.entries(grouped).map(([employeeName, empSchedules]) => `
+                <div class="day-schedule">
+                    <strong>${employeeName}</strong><br>
+                    ${empSchedules.map(s => `${dayNames[s.day_of_week]}: ${s.start_time}-${s.end_time}`).join('<br>')}
+                </div>
+            `).join('');
+        }
+
+        function updateCurrentStatus() {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            const container = document.getElementById('currentStatus');
+            const todaySchedules = allSchedules.filter(s => s.day_of_week === currentDay);
+            
+            if (todaySchedules.length === 0) {
+                container.innerHTML = '<div class="loading">No hay horarios para hoy</div>';
+                return;
+            }
+
+            container.innerHTML = todaySchedules.map(schedule => {
+                let status = 'badge-warning';
+                let statusText = 'Fuera de horario';
+                
+                if (currentTime >= schedule.start_time && currentTime <= schedule.end_time) {
+                    status = 'badge-success';
+                    statusText = 'En horario';
+                } else if (currentTime < schedule.start_time) {
+                    status = 'badge-warning';
+                    statusText = 'Antes del horario';
+                } else {
+                    status = 'badge-danger';
+                    statusText = 'Después del horario';
+                }
+
+                return `
+                    <div class="day-schedule">
+                        <strong>${schedule.employee_name}</strong><br>
+                        ${schedule.start_time} - ${schedule.end_time}<br>
+                        <span class="badge ${status}">${statusText}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAddScheduleModal() {
+            document.getElementById('scheduleModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('scheduleModal').style.display = 'none';
+            document.getElementById('scheduleForm').reset();
+        }
+
+        function deleteSchedule(scheduleId) {
+            if (confirm('¿Estás seguro de eliminar este horario?')) {
+                // Implementar eliminación
+                alert('Función de eliminación pendiente');
+            }
+        }
+
+        function generateScheduleReport() {
+            alert('Generando reporte de cumplimiento de horarios...');
+        }
+
+        // Formulario
+        document.getElementById('scheduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                employee_id: document.getElementById('employeeSelect').value,
+                day_of_week: parseInt(document.getElementById('daySelect').value),
+                start_time: document.getElementById('startTime').value,
+                end_time: document.getElementById('endTime').value
+            };
+            
+            fetch('/api/schedules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    closeModal();
+                    loadSchedules();
+                }
+            })
+            .catch(error => {
+                alert('Error al agregar horario');
+            });
+        });
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('scheduleModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Inicializar
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        setInterval(updateCurrentStatus, 60000); // Actualizar estado cada minuto
+        loadEmployees();
+        loadSchedules();
+    </script>
+</body>
+</html>

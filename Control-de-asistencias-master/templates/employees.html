@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Empleados</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; color: #1e293b; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+        
+        /* Header Section */
+        .header-section { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+        .header-title { color: #1e293b; }
+        .employee-count { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; }
+        
+        /* Connection Status */
+        .connection-status {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            margin-top: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .status-connected { background: #dcfce7; color: #166534; }
+        .status-disconnected { background: #fee2e2; color: #991b1b; }
+        .status-checking { background: #fef3c7; color: #92400e; }
+        
+        /* Buttons */
+        .btn { 
+            padding: 0.75rem 1.5rem; 
+            border: none; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-size: 0.875rem;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        .btn-outline { background: white; border: 1px solid #e2e8f0; color: #475569; }
+        .btn-outline:hover { background: #f8fafc; }
+        
+        .btn-sm { 
+            padding: 0.375rem 0.75rem; 
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+        }
+        
+        /* Search Section */
+        .search-section { 
+            background: white; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1rem;
+            position: relative;
+        }
+        .search-input { 
+            width: 100%; 
+            padding: 0.75rem 1rem 0.75rem 2.5rem; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 0.5rem;
+            background: white;
+            color: #1e293b;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .search-icon { 
+            position: absolute; 
+            left: 1.75rem; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            width: 1.25rem; 
+            height: 1.25rem; 
+            color: #64748b;
+        }
+        
+        /* Employee Grid */
+        .employee-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+            gap: 1rem;
+        }
+        
+        .employee-card { 
+            background: white; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+        .employee-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .employee-card.inactive { opacity: 0.6; }
+        
+        /* Card Header */
+        .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .avatar { 
+            width: 3rem; 
+            height: 3rem; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+        .employee-info h3 { color: #1e293b; margin-bottom: 0.25rem; }
+        .employee-dept { font-size: 0.875rem; color: #64748b; }
+        
+        /* Badge */
+        .badge { 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 9999px; 
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-left: auto;
+        }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        
+        /* Card Body */
+        .card-body { margin-bottom: 1rem; }
+        .info-line { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        .info-icon { width: 1rem; height: 1rem; }
+        
+        /* Card Footer */
+        .card-footer { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        
+        /* Modal */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 2rem; 
+            border-radius: 0.75rem; 
+            max-width: 500px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.1);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { color: #1e293b; }
+        .close-btn { 
+            background: none; 
+            border: none; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            color: #64748b;
+            padding: 0.25rem;
+        }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        .form-control { 
+            width: 100%; 
+            padding: 0.75rem; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 0.5rem;
+            background: white;
+            color: #1e293b;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        
+        .form-footer { display: flex; gap: 1rem; margin-top: 2rem; }
+        
+        /* Empty State */
+        .empty-state { 
+            text-align: center; 
+            padding: 4rem 2rem; 
+            color: #64748b;
+            grid-column: 1 / -1;
+        }
+        .empty-icon { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: #cbd5e1; }
+        .empty-title { color: #475569; margin-bottom: 0.5rem; }
+        
+        /* Loading */
+        .loading { 
+            text-align: center; 
+            padding: 2rem; 
+            color: #64748b;
+            grid-column: 1 / -1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-section { flex-direction: column; align-items: flex-start; }
+            .employee-grid { grid-template-columns: 1fr; }
+            .card-footer { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="space-y-6">
+            <!-- Header Section -->
+            <div class="header-section">
+                <div>
+                    <h1 class="header-title">👥 Gestión de Empleados</h1>
+                    <div class="employee-count" id="employeeCount">Cargando empleados...</div>
+                    <div id="connectionStatus" class="connection-status">Verificando conexión...</div>
+                </div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="/" class="btn btn-secondary">← Dashboard</a>
+                    <button class="btn btn-primary" onclick="showAddEmployeeModal()">
+                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Agregar Empleado
+                    </button>
+                    <button class="btn btn-success" onclick="syncEmployees()" id="syncBtn">
+                        🔄 Sincronizar
+                    </button>
+                    <button class="btn btn-warning" onclick="testConnection()" id="testBtn">
+                        🔌 Probar Conexión
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" class="search-input" id="searchBox" placeholder="Buscar por nombre, departamento o email..." onkeyup="filterEmployees()">
+            </div>
+
+            <!-- Employee Grid -->
+            <div class="employee-grid" id="employeeGrid">
+                <div class="loading">Cargando empleados...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar/Editar Empleado -->
+    <div class="modal" id="employeeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">👤 Agregar Nuevo Empleado</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="employeeForm">
+                <div class="form-group">
+                    <label class="form-label">ID del Empleado *</label>
+                    <input type="text" class="form-control" id="employeeId" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo *</label>
+                    <input type="text" class="form-control" id="employeeName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Departamento</label>
+                    <select class="form-control" id="employeeDept">
+                        <option value="General">General</option>
+                        <option value="Reacondicionamiento">Reacondicionamiento</option>
+                        <option value="Administración">Administración</option>
+                        <option value="Producción">Producción</option>
+                        <option value="Calidad">Calidad</option>
+                        <option value="Mantenimiento">Mantenimiento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Horario de Trabajo</label>
+                    <select class="form-control" id="employeeSchedule">
+                        <option value="estandar">Estándar (8:00 AM - 5:00 PM)</option>
+                        <option value="reacondicionamiento">Reacondicionamiento (7:00 AM - 5:00 PM / 4:00 PM Viernes)</option>
+                        <option value="administrativo">Administrativo (9:00 AM - 6:00 PM)</option>
+                        <option value="turno_noche">Turno Noche (10:00 PM - 6:00 AM)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" class="form-control" id="employeePhone">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="employeeEmail">
+                </div>
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-success" id="submitBtn">
+                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Agregar
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">
+                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allEmployees = [];
+
+        function loadEmployees() {
+            fetch('/api/employees')
+                .then(response => response.json())
+                .then(data => {
+                    allEmployees = data;
+                    displayEmployees(data);
+                })
+                .catch(error => {
+                    document.getElementById('employeeGrid').innerHTML = `
+                        <div class="empty-state">Error al cargar empleados</div>
+                    `;
+                });
+        }
+
+        function displayEmployees(employees) {
+            const grid = document.getElementById('employeeGrid');
+            const countEl = document.getElementById('employeeCount');
+            
+            // Update count
+            const activeCount = employees.filter(emp => emp.active).length;
+            countEl.textContent = `${activeCount} empleados activos de ${employees.length} total`;
+            
+            if (employees.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <h3 class="empty-title">No hay empleados registrados</h3>
+                        <p>Agrega empleados manualmente o sincroniza desde el dispositivo Hikvision</p>
+                        <button class="btn btn-primary" onclick="showAddEmployeeModal()" style="margin-top: 1rem;">
+                            <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Agregar Primer Empleado
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = employees.map(emp => `
+                <div class="employee-card ${!emp.active ? 'inactive' : ''}">
+                    <div class="card-header">
+                        <div class="avatar">
+                            ${emp.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="employee-info">
+                            <h3>${emp.name}</h3>
+                            <div class="employee-dept">${emp.department || 'Sin departamento'}</div>
+                        </div>
+                        <span class="badge ${emp.active ? 'badge-success' : 'badge-danger'}">
+                            ${emp.active ? '✓ Activo' : '✗ Inactivo'}
+                        </span>
+                    </div>
+                    
+                    <div class="card-body">
+                        ${emp.email ? `
+                            <div class="info-line">
+                                <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                ${emp.email}
+                            </div>
+                        ` : ''}
+                        ${emp.phone ? `
+                            <div class="info-line">
+                                <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                </svg>
+                                ${emp.phone}
+                            </div>
+                        ` : ''}
+                        <div class="info-line">
+                            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4zM9 3v1h6V3H9z"></path>
+                            </svg>
+                            ID: ${emp.employee_id}
+                        </div>
+                        <div class="info-line">
+                            <svg class="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${getScheduleText(emp.schedule || 'estandar')}
+                        </div>
+                        <div class="info-line">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${emp.synced ? '#10b981' : '#ef4444'}; margin-right: 0.25rem;"></div>
+                            ${emp.synced ? 'Sincronizado' : 'No sincronizado'}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <button class="btn btn-primary btn-sm" onclick="editEmployee('${emp.employee_id}')">
+                            <svg style="width: 0.75rem; height: 0.75rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Editar
+                        </button>
+                        ${(emp.department === 'Reacondicionamiento' || emp.schedule === 'reacondicionamiento') ? `
+                            <button class="btn btn-secondary btn-sm" onclick="showScheduleInfo('${emp.employee_id}')">
+                                🕐 Horario
+                            </button>
+                        ` : ''}
+                        <button class="btn ${emp.active ? 'btn-warning' : 'btn-success'} btn-sm" onclick="toggleEmployee('${emp.employee_id}')">
+                            ${emp.active ? '⏸️ Desactivar' : '▶️ Activar'}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${emp.employee_id}')">
+                            <svg style="width: 0.75rem; height: 0.75rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterEmployees() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const filtered = allEmployees.filter(emp => 
+                emp.name.toLowerCase().includes(searchTerm) ||
+                emp.employee_id.toLowerCase().includes(searchTerm) ||
+                (emp.department && emp.department.toLowerCase().includes(searchTerm))
+            );
+            displayEmployees(filtered);
+        }
+
+        function showAddEmployeeModal() {
+            document.getElementById('modalTitle').textContent = '👤 Agregar Nuevo Empleado';
+            document.getElementById('submitBtn').innerHTML = `
+                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Agregar
+            `;
+            document.getElementById('employeeForm').reset();
+            document.getElementById('employeeDept').value = 'General';
+            document.getElementById('employeeSchedule').value = 'estandar';
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        function editEmployee(employeeId) {
+            const employee = allEmployees.find(emp => emp.employee_id === employeeId);
+            if (!employee) return;
+
+            document.getElementById('modalTitle').textContent = '✏️ Editar Empleado';
+            document.getElementById('submitBtn').innerHTML = `
+                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                </svg>
+                Guardar
+            `;
+            document.getElementById('employeeId').value = employee.employee_id;
+            document.getElementById('employeeName').value = employee.name;
+            document.getElementById('employeeDept').value = employee.department || 'General';
+            document.getElementById('employeeSchedule').value = employee.schedule || 'estandar';
+            document.getElementById('employeePhone').value = employee.phone || '';
+            document.getElementById('employeeEmail').value = employee.email || '';
+            document.getElementById('employeeModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('employeeModal').style.display = 'none';
+        }
+
+        function toggleEmployee(employeeId) {
+            const employee = allEmployees.find(emp => emp.employee_id === employeeId);
+            const action = employee.active ? 'deactivate' : 'activate';
+            
+            if (confirm(`¿Estás seguro de ${action === 'activate' ? 'activar' : 'desactivar'} a ${employee.name}?`)) {
+                fetch(`/api/employees/${employeeId}/${action}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadEmployees();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Error de conexión'));
+            }
+        }
+
+        function deleteEmployee(employeeId) {
+            const employee = allEmployees.find(emp => emp.employee_id === employeeId);
+            
+            if (confirm(`¿Estás seguro de eliminar a ${employee.name}? Esta acción no se puede deshacer.`)) {
+                fetch(`/api/employees/${employeeId}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadEmployees();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => alert('Error de conexión'));
+            }
+        }
+
+        function syncEmployees() {
+            const btn = document.getElementById('syncBtn');
+            btn.disabled = true;
+            btn.textContent = '🔄 Sincronizando...';
+            
+            fetch('/api/sync_employees', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Sincronización completada: ${data.message}`);
+                        loadEmployees();
+                        updateConnectionStatus(true);
+                    } else {
+                        alert('Error en sincronización: ' + data.message);
+                        updateConnectionStatus(false);
+                    }
+                })
+                .catch(error => {
+                    alert('Error de conexión con el dispositivo');
+                    updateConnectionStatus(false);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Sincronizar';
+                });
+        }
+        
+        function testConnection() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = '🔌 Probando...';
+            
+            fetch('/api/test_connection', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    updateConnectionStatus(data.connected);
+                })
+                .catch(error => {
+                    alert('Error al probar conexión');
+                    updateConnectionStatus(false);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🔌 Probar Conexión';
+                });
+        }
+        
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.className = 'connection-status status-connected';
+                statusEl.innerHTML = '✓ Dispositivo Conectado';
+            } else {
+                statusEl.className = 'connection-status status-disconnected';
+                statusEl.innerHTML = '✗ Dispositivo Desconectado';
+            }
+        }
+        
+        function checkConnectionStatus() {
+            fetch('/api/test_connection', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => updateConnectionStatus(data.connected))
+                .catch(() => updateConnectionStatus(false));
+        }
+        
+        function getScheduleText(schedule) {
+            const schedules = {
+                'estandar': 'Estándar (8:00-17:00)',
+                'reacondicionamiento': 'Reacondicionamiento (7:00-17:00/16:00 Vie)',
+                'administrativo': 'Administrativo (9:00-18:00)',
+                'turno_noche': 'Turno Noche (22:00-06:00)'
+            };
+            return schedules[schedule] || 'Estándar';
+        }
+        
+        function showScheduleInfo(employeeId) {
+            fetch(`/api/schedule_info/${employeeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    let message = `📋 INFORMACIÓN DE HORARIO\n\n`;
+                    message += `👤 Empleado: ${data.employee_name}\n`;
+                    message += `🏢 Departamento: ${data.department}\n`;
+                    message += `📅 Día: ${data.current_day}\n`;
+                    message += `🕐 Hora actual: ${data.current_time}\n\n`;
+                    
+                    if (data.expected_schedule) {
+                        message += `⏰ HORARIO DE REACONDICIONAMIENTO:\n`;
+                        Object.values(data.expected_schedule).forEach(schedule => {
+                            message += `   • ${schedule}\n`;
+                        });
+                        message += `\n📍 Próximo evento esperado: ${data.next_expected}\n\n`;
+                    }
+                    
+                    if (data.today_records && data.today_records.length > 0) {
+                        message += `📊 REGISTROS DE HOY (${data.today_records.length} marcajes):\n`;
+                        data.today_records.forEach((record, index) => {
+                            const icon = record.event_type === 'entrada' ? '🟢' : '🔴';
+                            message += `   ${index + 1}. ${icon} ${record.event_type.toUpperCase()} - ${record.time}\n`;
+                        });
+                    } else {
+                        message += `📊 REGISTROS DE HOY: Sin marcajes aún\n`;
+                    }
+                    
+                    alert(message);
+                })
+                .catch(error => {
+                    alert('Error al obtener información del horario');
+                });
+        }
+
+        // Form submission
+        document.getElementById('employeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                employee_id: document.getElementById('employeeId').value,
+                name: document.getElementById('employeeName').value,
+                department: document.getElementById('employeeDept').value,
+                schedule: document.getElementById('employeeSchedule').value,
+                phone: document.getElementById('employeePhone').value,
+                email: document.getElementById('employeeEmail').value
+            };
+
+            const isEdit = document.getElementById('submitBtn').innerHTML.includes('Guardar');
+            const url = isEdit ? `/api/employees/${formData.employee_id}` : '/api/employees';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeModal();
+                    loadEmployees();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => alert('Error de conexión'));
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('employeeModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Load employees on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEmployees();
+            checkConnectionStatus();
+            
+            // Check connection every 30 seconds
+            setInterval(checkConnectionStatus, 30000);
+            
+            // Auto-refresh employees every 2 minutes to show updated schedule info
+            setInterval(loadEmployees, 120000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h3 { color: #2c3e50; margin-bottom: 1rem; }
+        .stat { font-size: 2rem; font-weight: bold; color: #3498db; }
+        .employee-list { max-height: 300px; overflow-y: auto; }
+        .employee-item { padding: 0.5rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .status-inside { color: #27ae60; }
+        .status-outside { color: #e74c3c; }
+        .recent-records { max-height: 400px; overflow-y: auto; }
+        .record-item { padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .timestamp { color: #7f8c8d; font-size: 0.9rem; }
+        .refresh-btn { background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        .refresh-btn:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 Sistema de Control de Asistencia</h1>
+        <p>Monitoreo en tiempo real</p>
+    </div>
+
+    <div class="container">
+        <div class="cards">
+            <div class="card">
+                <h3>📊 Resumen del Día</h3>
+                <div>Total de registros: <span class="stat" id="totalRecords">-</span></div>
+                <div>Empleados activos: <span class="stat" id="uniqueEmployees">-</span></div>
+                <button class="refresh-btn" onclick="loadData()">🔄 Actualizar</button>
+            </div>
+
+            <div class="card">
+                <h3>👥 Empleados Dentro</h3>
+                <div class="employee-list" id="employeesInside">
+                    <div class="employee-item">Cargando...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🚪 Empleados Fuera</h3>
+                <div class="employee-list" id="employeesOutside">
+                    <div class="employee-item">Cargando...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📋 Registros Recientes</h3>
+            <div class="recent-records" id="recentRecords">
+                <div class="record-item">Cargando registros...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadData() {
+            // Cargar resumen
+            fetch('/api/summary')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalRecords').textContent = data.total_records;
+                    document.getElementById('uniqueEmployees').textContent = data.unique_employees;
+                    
+                    // Mostrar registros recientes
+                    const recentDiv = document.getElementById('recentRecords');
+                    if (data.recent_records.length === 0) {
+                        recentDiv.innerHTML = '<div class="record-item">No hay registros hoy</div>';
+                    } else {
+                        recentDiv.innerHTML = data.recent_records.map(record => `
+                            <div class="record-item">
+                                <strong>${record[0]}</strong> - ${record[1].toUpperCase()}
+                                <div class="timestamp">${new Date(record[2]).toLocaleString()} | ${record[3]}</div>
+                            </div>
+                        `).join('');
+                    }
+                });
+
+            // Cargar estado de empleados
+            fetch('/api/employee_status')
+                .then(response => response.json())
+                .then(data => {
+                    const insideDiv = document.getElementById('employeesInside');
+                    const outsideDiv = document.getElementById('employeesOutside');
+                    
+                    if (data.inside.length === 0) {
+                        insideDiv.innerHTML = '<div class="employee-item">Nadie dentro</div>';
+                    } else {
+                        insideDiv.innerHTML = data.inside.map(emp => `
+                            <div class="employee-item">
+                                <span class="status-inside">🟢 ${emp.name}</span>
+                                <span>${emp.time ? new Date(emp.time).toLocaleTimeString() : ''}</span>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    if (data.outside.length === 0) {
+                        outsideDiv.innerHTML = '<div class="employee-item">Todos dentro</div>';
+                    } else {
+                        outsideDiv.innerHTML = data.outside.map(emp => `
+                            <div class="employee-item">
+                                <span class="status-outside">🔴 ${emp.name}</span>
+                                <span>${emp.time ? new Date(emp.time).toLocaleTimeString() : 'Sin registro'}</span>
+                            </div>
+                        `).join('');
+                    }
+                });
+        }
+
+        // Cargar datos al inicio
+        loadData();
+
+        // Auto-refresh cada 30 segundos
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
