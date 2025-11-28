@@ -1,26 +1,39 @@
-# Sistema de Control de Asistencia Hikvision
+# Sistema de Control de Asistencia Hikvision v2.0
 
-Sistema completo para monitorear y gestionar la asistencia de empleados usando dispositivos Hikvision con lector de huella dactilar.
+Sistema completo y unificado para monitorear y gestionar la asistencia de empleados usando dispositivos Hikvision con lector de huella dactilar.
 
-## 🚀 Características
+## 🚀 Características Principales
 
-- **Monitoreo en tiempo real** de eventos de huella dactilar
-- **Base de datos SQLite** para almacenar registros
-- **Dashboard web** para visualización
-- **Detección automática** de entrada/salida
-- **Reportes diarios** de asistencia
-- **Gestión de empleados**
+- **Monitoreo en tiempo real** con WebSockets
+- **Sistema unificado** con interfaz web moderna
+- **Base de datos SQLite** optimizada
+- **Sincronización bidireccional** con dispositivos
+- **Dashboard interactivo** con actualizaciones automáticas
+- **Gestión completa de empleados**
+- **Reconexión automática** ante fallos de red
+- **API REST** para integraciones
+- **Frontend React** (opcional)
+- **Soporte para múltiples métodos** de verificación
 
 ## 📋 Archivos del Sistema
 
 ### Scripts Principales
+- `unified_system.py` - **Sistema unificado principal** (RECOMENDADO)
+- `system_optimized.py` - Sistema optimizado con mejoras de rendimiento
+- `cloud_system.py` - Versión con integración Firebase
 - `hikvision_isapi.py` - Script básico de conexión y monitoreo
 - `attendance_system.py` - Sistema completo con base de datos
 - `web_dashboard.py` - Dashboard web con Flask
 
+### Frontend Moderno
+- `frontend/` - Aplicación React con Vite
+- `templates/` - Plantillas HTML para Flask
+
 ### Archivos de Configuración
-- `requirements_full.txt` - Dependencias necesarias
-- `templates/dashboard.html` - Interfaz web
+- `requirements_unified.txt` - Dependencias para sistema unificado
+- `requirements_cloud.txt` - Dependencias para versión cloud
+- `requirements_full.txt` - Dependencias completas
+- `.env.example` - Ejemplo de configuración de entorno
 
 ## 🛠️ Instalación
 
@@ -35,35 +48,40 @@ pip install -r requirements_full.txt
 
 ## 📱 Uso del Sistema
 
-### 1. Sistema Básico de Monitoreo
+### 🌟 Sistema Unificado (RECOMENDADO)
 ```bash
-python hikvision_isapi.py
+python unified_system.py
 ```
-- Muestra eventos en tiempo real
-- Ideal para pruebas y diagnóstico
+**Características:**
+- Dashboard web completo en http://localhost:5000
+- Monitoreo en tiempo real con WebSockets
+- Gestión de empleados integrada
+- Sincronización automática con dispositivo
+- Reconexión automática ante fallos
+- API REST completa
 
-### 2. Sistema Completo de Asistencia
+### 🚀 Frontend React (Opcional)
 ```bash
-python attendance_system.py
+cd frontend
+npm install
+npm run dev
 ```
+Interfaz moderna en http://localhost:5173
 
-**Menú principal:**
-- **Opción 1:** Monitoreo en tiempo real con base de datos
-- **Opción 2:** Agregar nuevos empleados
-- **Opción 3:** Ver reportes diarios
-- **Opción 4:** Salir
-
-### 3. Dashboard Web
+### ☁️ Versión Cloud
 ```bash
-python web_dashboard.py
+python cloud_system.py
 ```
-Luego abrir: http://localhost:5000
+- Integración con Firebase
+- Sincronización en la nube
+- Acceso remoto
 
-**Características del dashboard:**
-- Resumen diario en tiempo real
-- Lista de empleados dentro/fuera
-- Registros recientes
-- Auto-actualización cada 30 segundos
+### 🔧 Herramientas de Diagnóstico
+```bash
+python test_connection.py    # Probar conexión
+python check_status.py       # Ver estado actual
+python status_today.py       # Resumen del día
+```
 
 ## 🗄️ Base de Datos
 
@@ -137,14 +155,27 @@ Muestra todos los registros del día con:
 4. **Almacenamiento** → Base de datos SQLite
 5. **Visualización** → Dashboard web
 
-## 📈 Próximas Mejoras
+## 📈 Nuevas Características v2.0
 
-- [ ] Notificaciones por email
-- [ ] Exportar reportes a Excel
+- [x] **Sistema unificado** con WebSockets
+- [x] **Frontend React** moderno
+- [x] **Reconexión automática** ante fallos
+- [x] **Sincronización bidireccional** con dispositivos
+- [x] **API REST** completa
+- [x] **Integración Firebase** para la nube
+- [x] **Dashboard interactivo** en tiempo real
+- [x] **Gestión avanzada** de empleados
+
+## 🚀 Próximas Mejoras
+
+- [ ] Notificaciones push en tiempo real
+- [ ] Exportar reportes a Excel/PDF
 - [ ] Integración con sistemas de nómina
-- [ ] App móvil
-- [ ] Reconocimiento facial
-- [ ] Alertas de horarios
+- [ ] App móvil nativa
+- [ ] Reconocimiento facial avanzado
+- [ ] Alertas de horarios personalizadas
+- [ ] Múltiples dispositivos
+- [ ] Reportes analíticos avanzados
 
 ## 🤝 Soporte
 
